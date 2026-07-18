@@ -38,9 +38,22 @@ a {
 
 .site-header,
 .site-footer,
-.home-layout {
+.home-layout,
+.page-intro {
   width: min(100% - 2rem, 64rem);
   margin-inline: auto;
+}
+
+.page-intro {
+  padding: 1.75rem 0 0.5rem;
+  max-width: min(100% - 2rem, 64rem);
+}
+
+.page-intro h1 {
+  margin: 0;
+  max-width: 36rem;
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  line-height: 1.2;
 }
 
 .site-header {
@@ -162,6 +175,42 @@ a {
   min-height: 8rem;
   border: 1px dashed var(--line);
   background: rgba(255, 255, 255, 0.28);
+}
+
+.prose-block {
+  max-width: 42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.prose-block > p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.highlight-wide {
+  margin-top: 0.5rem;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  background: var(--surface);
+}
+
+.highlight-wide .highlight-label {
+  margin: 0 0 0.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.highlight-wide > p:last-child {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.45;
 }
 
 .box-grid {
