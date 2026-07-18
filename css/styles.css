@@ -224,6 +224,13 @@ a {
   max-width: 46rem;
 }
 
+.complex-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
 .finding-box {
   display: flex;
   flex-direction: column;
@@ -384,7 +391,8 @@ h1 {
   }
 
   .box-grid,
-  .finding-grid {
+  .finding-grid,
+  .complex-grid {
     grid-template-columns: 1fr;
   }
 }
