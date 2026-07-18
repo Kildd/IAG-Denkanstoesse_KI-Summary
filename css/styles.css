@@ -106,42 +106,75 @@ a {
   z-index: 20;
   display: flex;
   flex-direction: column;
+  max-height: calc(100vh - 2rem);
   margin: 0;
   padding: 0.35rem 0;
+  overflow-y: auto;
   border: 1px solid var(--line);
   background: color-mix(in srgb, #f6f3ee 88%, white);
   backdrop-filter: blur(10px);
 }
 
-.topic-beam a {
+.topic-group {
+  border-bottom: 1px solid var(--line);
+}
+
+.topic-group:last-child {
+  border-bottom: none;
+}
+
+.topic-beam .topic-link,
+.topic-beam .topic-subnav a {
   display: flex;
   align-items: center;
-  padding: 0.8rem 0.9rem;
+  padding: 0.75rem 0.9rem;
   text-decoration: none;
   font-family: system-ui, sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.3;
   color: var(--muted);
-  border-bottom: 1px solid var(--line);
   transition:
     color 160ms ease,
     background-color 160ms ease;
 }
 
-.topic-beam a:last-child {
-  border-bottom: none;
+.topic-beam .topic-link {
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
-.topic-beam a:hover {
+.topic-beam .topic-link:hover,
+.topic-beam .topic-subnav a:hover {
   color: var(--accent);
   background: var(--accent-soft);
 }
 
-.topic-beam a.is-active {
+.topic-beam .topic-link.is-active {
   color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.topic-subnav {
+  display: none;
+  flex-direction: column;
+  padding: 0 0 0.35rem;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.topic-group.is-open .topic-subnav {
+  display: flex;
+}
+
+.topic-beam .topic-subnav a {
+  padding: 0.4rem 0.9rem 0.4rem 1.25rem;
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+
+.topic-beam .topic-subnav a.is-active {
+  color: var(--accent);
+  font-weight: 700;
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
@@ -243,6 +276,7 @@ a {
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.15rem 1.2rem;
+  scroll-margin-top: 1rem;
   background: var(--surface);
   border: 1px solid var(--line);
 }
@@ -382,25 +416,7 @@ h1 {
 
   .topic-beam {
     top: 0;
-    flex-direction: row;
-  }
-
-  .topic-beam a {
-    flex: 1;
-    justify-content: center;
-    text-align: center;
-    border-bottom: none;
-    border-right: 1px solid var(--line);
-    padding: 0.75rem 0.4rem;
-    font-size: 0.85rem;
-  }
-
-  .topic-beam a:last-child {
-    border-right: none;
-  }
-
-  .topic-beam a.is-active {
-    box-shadow: inset 0 -3px 0 var(--accent);
+    max-height: none;
   }
 
   .box-grid,
