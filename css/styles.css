@@ -577,6 +577,23 @@ h1 {
   min-width: 0;
 }
 
+.synthesis-back {
+  margin: 0 0 0.75rem;
+}
+
+.synthesis-back-link {
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.synthesis-back-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 .article-pager {
   display: flex;
   justify-content: space-between;
