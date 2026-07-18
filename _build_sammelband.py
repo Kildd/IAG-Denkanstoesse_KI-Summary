@@ -4,7 +4,8 @@ from pathlib import Path
 import html
 import json
 import re
-import shutil
+
+from _sammelband_content import CHAPTER_INTROS, EINLEITUNG_SECTIONS, LITERATURE
 
 root = Path(__file__).resolve().parent
 
@@ -24,8 +25,8 @@ ARTICLES = [
         "einleitung.html",
         "Yuca Meubrink, Ulrike Kuhlmann und Mike Schlaich",
         "Einleitung: Hindernisse nachhaltigen Bauens als Forschungs- und Handlungsfeld",
-        "Einleitung: Hindernisse nachhaltigen Bauens als Forschungs- und Handlungsfeld",
-        False,
+        "Einleitung",
+        True,
     ),
     # 1
     (
@@ -235,7 +236,7 @@ ARTICLES = [
     (
         5,
         "artikel-5-1.html",
-        "Benedict Esche",
+        "Benedikt Esche",
         "Skeptizismus und fehlende Risikobereitschaft",
         "Skeptizismus und fehlende Risikobereitschaft",
         False,
@@ -288,49 +289,59 @@ FOOTER = """    <footer class="site-footer">
 </html>"""
 
 
-def build_toc(active_file: str) -> str:
-    by_section = {}
-    for sec, filename, authors, title, toc_label, full in ARTICLES:
-        by_section.setdefault(sec, []).append((filename, toc_label))
+def chapter_file(num: int) -> str:
+    return f"kapitel-{num}.html"
 
+
+def articles_in_section(num: int):
+    return [a for a in ARTICLES if a[0] == num]
+
+
+def build_toc(active_file: str) -> str:
     chunks = [
         '      <nav class="topic-beam sammelband-toc" aria-label="Sammelbandartikel">'
     ]
     for key, label, num in SECTIONS:
-        articles = by_section.get(key if key != "einleitung" else "einleitung", [])
-        if key.startswith("kapitel-") and num is not None:
-            articles = by_section.get(num, [])
-
-        is_active_section = False
-        sub_html = ""
         if key == "einleitung":
             active = active_file == "einleitung.html"
-            ein_title = ARTICLES[0][4]
             link_cls = "topic-link is-active" if active else "topic-link"
             aria = ' aria-current="page"' if active else ""
             chunks.append(
-                f'        <div class="topic-group{" is-open" if active else ""}" data-topic="{key}">'
+                f'        <div class="topic-group" data-topic="{key}">'
             )
             chunks.append(
-                f'          <a class="{link_cls}" href="einleitung.html"{aria}>{html.escape(ein_title)}</a>'
+                f'          <a class="{link_cls}" href="einleitung.html"{aria}>Einleitung</a>'
             )
             chunks.append("        </div>")
             continue
 
-        if articles:
-            for filename, toc_label in articles:
-                if filename == active_file:
-                    is_active_section = True
-                cls = ' class="is-active" aria-current="page"' if filename == active_file else ""
-                sub_html += (
-                    f'            <a href="{filename}"{cls}>{html.escape(toc_label)}</a>\n'
-                )
+        chapter_href = chapter_file(num)
+        is_chapter = active_file == chapter_href
+        articles = articles_in_section(num)
+        is_article = any(filename == active_file for _, filename, *_ in articles)
+        is_open = is_chapter or is_article
+        link_cls = "topic-link is-active" if is_open else "topic-link"
+        aria = ' aria-current="page"' if is_chapter else ""
 
-        open_cls = " is-open" if is_active_section else ""
+        sub_html = ""
+        for _, filename, _authors, _title, toc_label, _full in articles:
+            cls = (
+                ' class="is-active" aria-current="page"'
+                if filename == active_file
+                else ""
+            )
+            sub_html += (
+                f'            <a href="{filename}"{cls}>{html.escape(toc_label)}</a>\n'
+            )
+
+        open_cls = " is-open" if is_open else ""
         chunks.append(
             f'        <div class="topic-group{open_cls}" data-topic="{key}">'
         )
-        chunks.append(f'          <span class="topic-label">{html.escape(label)}</span>')
+        chunks.append(
+            f'          <a class="{link_cls}" href="{chapter_href}"{aria}>'
+            f"{html.escape(label)}</a>"
+        )
         if sub_html:
             chunks.append('          <div class="topic-subnav">')
             chunks.append(sub_html.rstrip())
@@ -341,7 +352,27 @@ def build_toc(active_file: str) -> str:
     return "\n".join(chunks)
 
 
-def load_full_body() -> str:
+def paras_to_html(paragraphs) -> str:
+    return "\n".join(f"            <p>{html.escape(p)}</p>" for p in paragraphs)
+
+
+def build_einleitung_body() -> str:
+    parts = []
+    for section in EINLEITUNG_SECTIONS:
+        parts.append(
+            f'            <h2 id="{html.escape(section["id"])}">'
+            f'{html.escape(section["heading"])}</h2>'
+        )
+        parts.append(paras_to_html(section["paragraphs"]))
+    parts.append('            <h2 id="literatur">Literatur</h2>')
+    parts.append('            <ul class="article-literature">')
+    for entry in LITERATURE:
+        parts.append(f"              <li>{html.escape(entry)}</li>")
+    parts.append("            </ul>")
+    return "\n".join(parts)
+
+
+def load_article_5_4_body() -> str:
     """Load previously extracted full article body for 5-4."""
     paras_path = root / "_article_paras.json"
     if not paras_path.exists():
@@ -354,7 +385,6 @@ def load_full_body() -> str:
                 "Celina Hunschok, Johanna Ruge, Max Dombrowski und Oliver André Wege"
             )
 
-    # paras: title, subtitle, authors, org, keywords, ...
     keywords = paras[4] if len(paras) > 4 else ""
     body_paras = paras[5:]
     parts = []
@@ -407,27 +437,20 @@ def pager(i: int) -> str:
         </nav>"""
 
 
-def render_page(i: int, full_body: str) -> str:
-    sec, filename, authors, title, toc_label, has_full = ARTICLES[i]
-    if has_full:
-        body = full_body
-        # For full article, show main title + authors; subtitle already in body as lead
-        display_title = "Zwischen Tragwerk und Tragweite"
-        subtitle_html = (
-            '            <p class="article-subtitle">'
-            "Das Berufsbild Bauingenieur:in in planetaren Grenzen</p>\n"
-        )
-    else:
-        body = "            <p>Beitrag folgt.</p>"
-        display_title = title
-        subtitle_html = ""
-
+def page_shell(
+    filename: str,
+    title: str,
+    authors_html: str,
+    body: str,
+    pager_html: str,
+    subtitle_html: str = "",
+) -> str:
     return f"""<!DOCTYPE html>
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{html.escape(display_title)} – Sammelbandartikel</title>
+    <title>{html.escape(title)} – Sammelbandartikel</title>
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body class="sammelband-page">
@@ -437,12 +460,12 @@ def render_page(i: int, full_body: str) -> str:
 {build_toc(filename)}
 
       <main class="article-main">
-{pager(i)}
+{pager_html}
 
         <article class="article">
           <header class="article-header">
-            <h1>{html.escape(display_title)}</h1>
-{subtitle_html}            <p class="article-authors">{html.escape(authors)}</p>
+            <h1>{html.escape(title)}</h1>
+{subtitle_html}{authors_html}
           </header>
           <div class="article-body prose-block">
 {body}
@@ -455,20 +478,91 @@ def render_page(i: int, full_body: str) -> str:
 """
 
 
-def main():
-    full_body = load_full_body()
+def render_article_page(i: int, body_5_4: str, body_einleitung: str) -> str:
+    sec, filename, authors, title, toc_label, has_full = ARTICLES[i]
+    if filename == "einleitung.html":
+        display_title = title
+        subtitle_html = ""
+        authors_html = (
+            f'            <p class="article-authors">{html.escape(authors)}</p>\n'
+        )
+        body = body_einleitung
+    elif has_full:
+        display_title = "Zwischen Tragwerk und Tragweite"
+        subtitle_html = (
+            '            <p class="article-subtitle">'
+            "Das Berufsbild Bauingenieur:in in planetaren Grenzen</p>\n"
+        )
+        authors_html = (
+            f'            <p class="article-authors">{html.escape(authors)}</p>\n'
+        )
+        body = body_5_4
+    else:
+        display_title = title
+        subtitle_html = ""
+        authors_html = (
+            f'            <p class="article-authors">{html.escape(authors)}</p>\n'
+        )
+        body = "            <p>Beitrag folgt.</p>"
 
-    # Remove old single article file if it will be replaced by dummies
-    old = root / "artikel-5-1.html"
-    # Will be overwritten
+    return page_shell(
+        filename, display_title, authors_html, body, pager(i), subtitle_html
+    )
+
+
+def render_chapter_page(num: int) -> str:
+    filename = chapter_file(num)
+    label = next(label for key, label, n in SECTIONS if n == num)
+    body_parts = [paras_to_html(CHAPTER_INTROS[num])]
+    body_parts.append('            <h2>Beiträge in diesem Abschnitt</h2>')
+    body_parts.append('            <ul class="chapter-article-list">')
+    for _, art_file, authors, title, _toc, _full in articles_in_section(num):
+        body_parts.append("              <li>")
+        body_parts.append(
+            f'                <a href="{art_file}">{html.escape(title)}</a>'
+        )
+        body_parts.append(
+            f'                <p class="chapter-article-authors">'
+            f"{html.escape(authors)}</p>"
+        )
+        body_parts.append("              </li>")
+    body_parts.append("            </ul>")
+
+    # Chapter pager: back to Einleitung or previous chapter / into first article
+    first_art = articles_in_section(num)[0][1]
+    prev_href = "einleitung.html" if num == 1 else chapter_file(num - 1)
+    next_href = first_art
+    pager_html = f"""        <nav class="article-pager" aria-label="Artikelnavigation">
+          <a class="pager-link pager-prev" href="{prev_href}">← Zurück</a>
+          <a class="pager-link pager-next" href="{next_href}">Erster Beitrag →</a>
+        </nav>"""
+
+    return page_shell(
+        filename,
+        label,
+        "",
+        "\n".join(body_parts),
+        pager_html,
+    )
+
+
+def main():
+    body_5_4 = load_article_5_4_body()
+    body_einleitung = build_einleitung_body()
 
     for i, article in enumerate(ARTICLES):
         filename = article[1]
-        html_out = render_page(i, full_body)
+        html_out = render_article_page(i, body_5_4, body_einleitung)
         (root / filename).write_text(html_out, encoding="utf-8")
         print("wrote", filename)
 
-    print("done", len(ARTICLES), "pages")
+    for num in range(1, 6):
+        filename = chapter_file(num)
+        html_out = render_chapter_page(num)
+        (root / filename).write_text(html_out, encoding="utf-8")
+        print("wrote", filename)
+
+    print("done", len(ARTICLES) + 5, "pages")
 
 
 if __name__ == "__main__":
