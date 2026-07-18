@@ -273,9 +273,9 @@ a {
 
 .tension-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  max-width: 46rem;
+  align-items: stretch;
 }
 
 .tension-box .tension-pair {
@@ -311,12 +311,15 @@ a {
 }
 
 .tension-vs {
-  font-family: system-ui, sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
+}
+
+.tension-vs svg {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .finding-box {
@@ -464,7 +467,8 @@ h1 {
   .box-grid,
   .finding-grid,
   .complex-grid,
-  .solution-grid {
+  .solution-grid,
+  .tension-grid {
     grid-template-columns: 1fr;
   }
 }
