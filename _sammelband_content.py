@@ -489,3 +489,55 @@ LITERATURE = [
     "United Nations Environment Programme (UNEP) & Global Alliance for Buildings and Construction (GlobalABC). 2025. „Global Status Report for Buildings and Construction 2024/2025: Not just another brick in the wall.” Nairobi: UNEP. https://www.unep.org/resources/report/global-status-report-buildings-and-construction-20242025 (Zugriff: 26.05.2026)",
     "Wall, Johannes; Dallinger, Christina und Daniela Trauninger. 2023. „Digitalisierungsprozesse für die klimaneutrale Baustelle.” In: Christian Hofstadler und Christoph Motzko (Hrsg.) Agile Digitalisierung im Baubetrieb. Wiesbaden: Springer Verlag, 641–664. https://doi.org/10.1007/978-3-658-43247-8_33",
 ]
+
+
+def _lit_by_start(*starts: str) -> list[str]:
+    """Return Literatur entries whose first author line starts with one of the prefixes."""
+    chosen = []
+    for start in starts:
+        matches = [e for e in LITERATURE if e.startswith(start)]
+        if not matches:
+            raise KeyError(f"No LITERATURE entry starting with {start!r}")
+        for entry in matches:
+            if entry not in chosen:
+                chosen.append(entry)
+    return chosen
+
+
+# Literature cited in each Abschnitt description (subset of Einleitung bibliography)
+CHAPTER_LITERATURE = {
+    1: _lit_by_start(
+        "Curbach, Manfred; Hegger",
+        "Elbers, Ulrike",
+        "Röder, Alexander",
+        "Schlaich, Mike",
+        "Wall, Johannes",
+        "Hafner, Annette und Achim Vogelsberg",
+        "Haist, Michael",
+    ),
+    2: _lit_by_start(
+        "DeTroy, Sarah",
+        "Poorisat, Tharaya",
+        "Fivet, Corentin",
+        "Hauke, Bernhard",
+        "Kuhlmann, Ulrike",
+        "Meubrink, Yuca",
+    ),
+    3: _lit_by_start(
+        "Hauke, Bernhard",
+        "Görtz, Stephan",
+        "Glückert, Bernd",
+        "Hafner, Annette und Michael Storck",
+        "Ibell, Tim",
+        "Lampugnani, Vittorio",
+    ),
+    4: _lit_by_start(
+        "Jakobs, Eva-Maria",
+    ),
+    5: _lit_by_start(
+        "Akkermann, Jan",
+        "Curbach, Manfred und Silke Scheerer",
+        "Hasche, Katja",
+        "Messari-Becker, Lamia",
+    ),
+}

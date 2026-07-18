@@ -5,7 +5,12 @@ import html
 import json
 import re
 
-from _sammelband_content import CHAPTER_INTROS, EINLEITUNG_SECTIONS, LITERATURE
+from _sammelband_content import (
+    CHAPTER_INTROS,
+    CHAPTER_LITERATURE,
+    EINLEITUNG_SECTIONS,
+    LITERATURE,
+)
 
 root = Path(__file__).resolve().parent
 
@@ -617,6 +622,14 @@ def render_chapter_page(num: int) -> str:
         )
         body_parts.append("              </li>")
     body_parts.append("            </ul>")
+
+    lit_entries = CHAPTER_LITERATURE.get(num, [])
+    if lit_entries:
+        body_parts.append('            <h2 id="literatur">Literatur</h2>')
+        body_parts.append('            <ul class="article-literature">')
+        for entry in lit_entries:
+            body_parts.append(f"              <li>{html.escape(entry)}</li>")
+        body_parts.append("            </ul>")
 
     first_art = articles_in_section(num)[0][1]
     next_href = f"{first_art}?from={filename}"
