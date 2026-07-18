@@ -306,11 +306,15 @@ def build_toc(active_file: str) -> str:
             active = active_file == "einleitung.html"
             link_cls = "topic-link is-active" if active else "topic-link"
             aria = ' aria-current="page"' if active else ""
+            authors = ARTICLES[0][2]
             chunks.append(
                 f'        <div class="topic-group" data-topic="{key}">'
             )
             chunks.append(
-                f'          <a class="{link_cls}" href="einleitung.html"{aria}>Einleitung</a>'
+                f'          <a class="{link_cls}" href="einleitung.html"{aria}>'
+                f'<span class="toc-entry-title">Einleitung</span>'
+                f'<span class="toc-entry-authors">{html.escape(authors)}</span>'
+                f"</a>"
             )
             chunks.append("        </div>")
             continue
@@ -324,14 +328,17 @@ def build_toc(active_file: str) -> str:
         aria = ' aria-current="page"' if is_chapter else ""
 
         sub_html = ""
-        for _, filename, _authors, _title, toc_label, _full in articles:
+        for _, filename, authors, _title, toc_label, _full in articles:
             cls = (
                 ' class="is-active" aria-current="page"'
                 if filename == active_file
                 else ""
             )
             sub_html += (
-                f'            <a href="{filename}"{cls}>{html.escape(toc_label)}</a>\n'
+                f'            <a href="{filename}"{cls}>'
+                f'<span class="toc-entry-title">{html.escape(toc_label)}</span>'
+                f'<span class="toc-entry-authors">{html.escape(authors)}</span>'
+                f"</a>\n"
             )
 
         open_cls = " is-open" if is_open else ""

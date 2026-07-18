@@ -142,6 +142,30 @@ a {
   font-weight: 600;
 }
 
+.sammelband-toc .topic-link,
+.sammelband-toc .topic-subnav a {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.sammelband-toc .toc-entry-title {
+  display: block;
+}
+
+.sammelband-toc .toc-entry-authors {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--muted) 88%, white);
+}
+
+.sammelband-toc .topic-subnav a.is-active .toc-entry-authors,
+.sammelband-toc .topic-link.is-active .toc-entry-authors {
+  color: color-mix(in srgb, var(--accent) 55%, var(--muted));
+}
+
 .topic-beam .topic-link:hover,
 .topic-beam .topic-subnav a:hover {
   color: var(--accent);
@@ -282,6 +306,18 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   align-items: stretch;
+}
+
+.vertiefung-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.vertiefung-fazit {
+  margin-top: 1.5rem;
+  max-width: var(--max);
 }
 
 .actor-grid {
@@ -655,7 +691,8 @@ h1 {
   .complex-grid,
   .solution-grid,
   .tension-grid,
-  .leitbild-grid {
+  .leitbild-grid,
+  .vertiefung-grid {
     grid-template-columns: 1fr;
   }
 }
