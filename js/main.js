@@ -8,6 +8,7 @@ document.documentElement.dataset.ready = "true";
   const groups = [...beam.querySelectorAll(".topic-group[data-topic]")];
   const topicLinks = [...beam.querySelectorAll("a.topic-link[data-topic]")];
   const subLinks = [...beam.querySelectorAll(".topic-subnav a[href^='#']")];
+  const markerOffset = 140;
 
   function setActiveTopic(topicId) {
     groups.forEach((group) => {
@@ -25,52 +26,63 @@ document.documentElement.dataset.ready = "true";
     });
   }
 
-  const sectionObserver = new IntersectionObserver(
-    (entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-
-      if (visible[0]) {
-        setActiveTopic(visible[0].target.dataset.topic);
-      }
-    },
-    {
-      rootMargin: "-15% 0px -55% 0px",
-      threshold: [0.05, 0.15, 0.3, 0.5],
-    }
-  );
-
-  sections.forEach((section) => sectionObserver.observe(section));
-
-  const subTargets = subLinks
-    .map((link) => {
-      const id = (link.getAttribute("href") || "").slice(1);
-      return id ? document.getElementById(id) : null;
-    })
-    .filter(Boolean);
-
-  if (subTargets.length > 0) {
-    const subObserver = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-
-        if (visible[0]) {
-          setActiveSub(visible[0].target.id);
-        }
-      },
-      {
-        rootMargin: "-25% 0px -55% 0px",
-        threshold: [0.1, 0.25, 0.4],
-      }
-    );
-
-    subTargets.forEach((target) => subObserver.observe(target));
+  function topicIdFromHash() {
+    const hash = (location.hash || "").slice(1);
+    if (!hash) return null;
+    if (hash.startsWith("abschnitt-")) return hash;
+    const el = document.getElementById(hash);
+    const section = el && el.closest(".topic-section[data-topic]");
+    return section ? section.dataset.topic : null;
   }
 
-  setActiveTopic(sections[0].dataset.topic);
+  function updateActiveFromScroll() {
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= markerOffset) {
+        current = section;
+      }
+    }
+    setActiveTopic(current.dataset.topic);
+
+    let activeSub = null;
+    for (const link of subLinks) {
+      const id = (link.getAttribute("href") || "").slice(1);
+      const target = id ? document.getElementById(id) : null;
+      if (!target) continue;
+      if (target.getBoundingClientRect().top <= markerOffset + 40) {
+        activeSub = id;
+      }
+    }
+    if (activeSub) setActiveSub(activeSub);
+  }
+
+  topicLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      const topicId = link.dataset.topic;
+      if (topicId) setActiveTopic(topicId);
+    });
+  });
+
+  subLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      const id = (link.getAttribute("href") || "").slice(1);
+      const target = id ? document.getElementById(id) : null;
+      const section = target && target.closest(".topic-section[data-topic]");
+      if (section) setActiveTopic(section.dataset.topic);
+      if (id) setActiveSub(id);
+    });
+  });
+
+  window.addEventListener("scroll", updateActiveFromScroll, { passive: true });
+  window.addEventListener("hashchange", () => {
+    const fromHash = topicIdFromHash();
+    if (fromHash) setActiveTopic(fromHash);
+    requestAnimationFrame(updateActiveFromScroll);
+  });
+
+  const fromHash = topicIdFromHash();
+  setActiveTopic(fromHash || sections[0].dataset.topic);
+  updateActiveFromScroll();
 })();
 
 /** On KI-Synthese: append ?from=<nearest-id> to Sammelband article links. */
