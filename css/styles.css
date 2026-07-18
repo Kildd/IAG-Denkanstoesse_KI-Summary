@@ -84,11 +84,9 @@ a {
 
 .brand-subtitle {
   display: block;
-  font-size: 0.82rem;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-  color: var(--muted);
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 
 .site-header nav {
