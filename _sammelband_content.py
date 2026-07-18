@@ -416,38 +416,13 @@ EINLEITUNG_SECTIONS = [
                 "erlaubt gerade die Zusammenstellung dieser sehr unterschiedlichen "
                 "Einzelbeiträge, die Herausforderungen nachhaltigen Bauens sichtbar zu "
                 "machen, Bemühungen um nachhaltiges Bauen kritisch zu reflektieren und "
-                "gehaltvolle und praxisrelevante Schlussfolgerungen zu ziehen. Im "
-                "verbleibenden Teil der Einleitung werden die fünf wichtigsten aktuellen "
-                "wissenschaftlichen und auch öffentlichen Debattenstränge zu den "
-                "Hindernissen nachhaltigen Bauens vorgestellt und gezeigt, in welcher "
-                "Weise die Beiträge dieses Bandes an diese Debatten jeweils anknüpfen."
+                "gehaltvolle und praxisrelevante Schlussfolgerungen zu ziehen. Die fünf "
+                "wichtigsten aktuellen wissenschaftlichen und auch öffentlichen "
+                "Debattenstränge zu den Hindernissen nachhaltigen Bauens und die Art und "
+                "Weise, in welcher die Beiträge dieses Bandes an diese Debatten jeweils "
+                "anknüpfen, werden in den Abschnitten des Sammelbands vorgestellt."
             ),
         ],
-    },
-    {
-        "id": "kapitel-1",
-        "heading": "Neue Technologien und Innovationen",
-        "paragraphs": CHAPTER_INTROS[1],
-    },
-    {
-        "id": "kapitel-2",
-        "heading": "Regulierung und Governance",
-        "paragraphs": CHAPTER_INTROS[2],
-    },
-    {
-        "id": "kapitel-3",
-        "heading": "Ökonomie",
-        "paragraphs": CHAPTER_INTROS[3],
-    },
-    {
-        "id": "kapitel-4",
-        "heading": "Kultur, Öffentlichkeit und Medien",
-        "paragraphs": CHAPTER_INTROS[4],
-    },
-    {
-        "id": "kapitel-5",
-        "heading": "Denkmuster, Routinen und Verhalten",
-        "paragraphs": CHAPTER_INTROS[5],
     },
     {
         "id": "fazit",

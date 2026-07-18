@@ -98,36 +98,56 @@ document.documentElement.dataset.ready = "true";
   });
 })();
 
-/** On Sammelband pages: show return link to the KI-Synthese anchor in ?from=. */
-(function initBackToSynthesis() {
+/**
+ * On Sammelband pages: show a return link from ?from=.
+ * - id only (e.g. akteur-6-6) → KI-Synthese
+ * - kapitel-*.html → Abschnittsübersicht
+ */
+(function initBackFromMarker() {
   if (!document.body.classList.contains("sammelband-page")) return;
 
   const from = new URLSearchParams(location.search).get("from");
   if (!from) return;
 
-  const anchorId = from.replace(/^#/, "");
   const main = document.querySelector(".article-main");
   const pager = document.querySelector(".article-pager");
   if (!main || !pager) return;
 
+  let href;
+  let label;
+  if (/\.html(?:#|$)/.test(from) || from.endsWith(".html")) {
+    href = from;
+    if (from.startsWith("kapitel-")) {
+      label = "← Zurück zur Übersicht";
+    } else if (from.startsWith("einleitung")) {
+      label = "← Zurück zur Einleitung";
+    } else {
+      label = "← Zurück";
+    }
+  } else {
+    const anchorId = from.replace(/^#/, "");
+    href = `index.html#${anchorId}`;
+    label = "← Zurück zur KI-Synthese";
+  }
+
   const back = document.createElement("a");
   back.className = "synthesis-back-link";
-  back.href = `index.html#${anchorId}`;
-  back.textContent = "← Zurück zur KI-Synthese";
+  back.href = href;
+  back.textContent = label;
 
   const wrap = document.createElement("nav");
   wrap.className = "synthesis-back";
-  wrap.setAttribute("aria-label", "Zurück zur KI-Synthese");
+  wrap.setAttribute("aria-label", label.replace(/^←\s*/, ""));
   wrap.appendChild(back);
   main.insertBefore(wrap, pager);
 
   pager.querySelectorAll("a.pager-prev, a.pager-next").forEach((link) => {
-    const href = link.getAttribute("href");
-    if (!href) return;
-    const [pathAndQuery, hash = ""] = href.split("#");
+    const linkHref = link.getAttribute("href");
+    if (!linkHref) return;
+    const [pathAndQuery, hash = ""] = linkHref.split("#");
     const [path, query = ""] = pathAndQuery.split("?");
     const params = new URLSearchParams(query);
-    params.set("from", anchorId);
+    params.set("from", from);
     link.setAttribute(
       "href",
       `${path}?${params.toString()}${hash ? `#${hash}` : ""}`

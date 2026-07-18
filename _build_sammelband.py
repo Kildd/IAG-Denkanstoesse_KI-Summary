@@ -405,7 +405,7 @@ ARTICLE_LINK_PHRASES = [
 ]
 
 
-def linkify_article_mentions(text: str) -> str:
+def linkify_article_mentions(text: str, from_page: str | None = None) -> str:
     """Escape plain text, then wrap known author mentions with article links."""
     result = html.escape(text)
     phrases = sorted(ARTICLE_LINK_PHRASES, key=lambda item: len(item[0]), reverse=True)
@@ -414,12 +414,15 @@ def linkify_article_mentions(text: str) -> str:
         needle = html.escape(phrase)
         if needle not in result:
             continue
+        target = href
+        if from_page:
+            target = f"{href}?from={from_page}"
         token = f"@@ARTICLELINK{i}@@"
         result = result.replace(needle, token, 1)
         placeholders.append(
             (
                 token,
-                f'<a class="article-inline-link" href="{html.escape(href)}">'
+                f'<a class="article-inline-link" href="{html.escape(target)}">'
                 f"{needle}</a>",
             )
         )
@@ -428,10 +431,13 @@ def linkify_article_mentions(text: str) -> str:
     return result
 
 
-def paras_to_html(paragraphs, *, linkify: bool = False) -> str:
+def paras_to_html(
+    paragraphs, *, linkify: bool = False, from_page: str | None = None
+) -> str:
     if linkify:
         return "\n".join(
-            f"            <p>{linkify_article_mentions(p)}</p>" for p in paragraphs
+            f"            <p>{linkify_article_mentions(p, from_page=from_page)}</p>"
+            for p in paragraphs
         )
     return "\n".join(f"            <p>{html.escape(p)}</p>" for p in paragraphs)
 
@@ -443,9 +449,7 @@ def build_einleitung_body() -> str:
             f'            <h2 id="{html.escape(section["id"])}">'
             f'{html.escape(section["heading"])}</h2>'
         )
-        # Link article mentions in the five chapter overview sections
-        linkify = section["id"].startswith("kapitel-")
-        parts.append(paras_to_html(section["paragraphs"], linkify=linkify))
+        parts.append(paras_to_html(section["paragraphs"]))
     parts.append('            <h2 id="literatur">Literatur</h2>')
     parts.append('            <ul class="article-literature">')
     for entry in LITERATURE:
@@ -595,13 +599,16 @@ def render_article_page(i: int, body_5_4: str, body_einleitung: str) -> str:
 def render_chapter_page(num: int) -> str:
     filename = chapter_file(num)
     label = next(label for key, label, n in SECTIONS if n == num)
-    body_parts = [paras_to_html(CHAPTER_INTROS[num], linkify=True)]
+    body_parts = [
+        paras_to_html(CHAPTER_INTROS[num], linkify=True, from_page=filename)
+    ]
     body_parts.append('            <h2>Beiträge in diesem Abschnitt</h2>')
     body_parts.append('            <ul class="chapter-article-list">')
     for _, art_file, authors, title, _toc, _full in articles_in_section(num):
         body_parts.append("              <li>")
         body_parts.append(
-            f'                <a href="{art_file}">{html.escape(title)}</a>'
+            f'                <a href="{art_file}?from={filename}">'
+            f"{html.escape(title)}</a>"
         )
         body_parts.append(
             f'                <p class="chapter-article-authors">'
@@ -610,12 +617,10 @@ def render_chapter_page(num: int) -> str:
         body_parts.append("              </li>")
     body_parts.append("            </ul>")
 
-    # Chapter pager: back to Einleitung or previous chapter / into first article
     first_art = articles_in_section(num)[0][1]
-    prev_href = "einleitung.html" if num == 1 else chapter_file(num - 1)
-    next_href = first_art
+    next_href = f"{first_art}?from={filename}"
     pager_html = f"""        <nav class="article-pager" aria-label="Artikelnavigation">
-          <a class="pager-link pager-prev" href="{prev_href}">← Zurück</a>
+          <a class="pager-link pager-prev" href="einleitung.html">← Zur Einleitung</a>
           <a class="pager-link pager-next" href="{next_href}">Erster Beitrag →</a>
         </nav>"""
 
