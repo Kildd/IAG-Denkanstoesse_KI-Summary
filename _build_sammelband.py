@@ -270,9 +270,10 @@ ARTICLES = [
 
 def site_header() -> str:
     return """    <header class="site-header">
-      <a class="brand" href="index.html"
-        >IAG Anders Bauen – für Ressourcenschonung und Klimaschutz</a
-      >
+      <a class="brand" href="index.html">
+        <span class="brand-title">IAG Anders Bauen</span>
+        <span class="brand-subtitle">für Ressourcenschonung und Klimaschutz</span>
+      </a>
       <nav aria-label="Hauptnavigation">
         <a href="index.html">KI-Synthese</a>
         <a href="einleitung.html" aria-current="page">Sammelbandartikel</a>
