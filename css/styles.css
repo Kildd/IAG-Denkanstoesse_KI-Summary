@@ -537,6 +537,17 @@ h1 {
   color: var(--ink);
 }
 
+.sammelband-page .article-body a.article-inline-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  font-weight: 600;
+}
+
+.sammelband-page .article-body a.article-inline-link:hover {
+  text-decoration-thickness: 2px;
+}
+
 .chapter-article-list {
   margin: 2rem 0 0;
   padding: 0;

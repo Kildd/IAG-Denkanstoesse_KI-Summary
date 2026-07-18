@@ -359,7 +359,80 @@ def build_toc(active_file: str) -> str:
     return "\n".join(chunks)
 
 
-def paras_to_html(paragraphs) -> str:
+# Author/name phrases as they appear in chapter intros → article file
+ARTICLE_LINK_PHRASES = [
+    (
+        "Celina Hunschok, Johanna Ruge, Max Dombrowski und Oliver André Wege",
+        "artikel-5-4.html",
+    ),
+    (
+        "Johannes Wall, Christina Dallinger und Niklot von Bülow",
+        "artikel-3-3.html",
+    ),
+    (
+        "Yuca Meubrink, Johanna Klausing und Andreas Scheu",
+        "artikel-4-4.html",
+    ),
+    (
+        "Yuca Meubrink, Mike Schlaich und Ulrike Kuhlmann",
+        "artikel-1-2.html",
+    ),
+    ("Jürgen Odszuck und Carla Jung-König", "artikel-2-4.html"),
+    ("Türk Schellenberg und Anja Schwarzlos", "artikel-2-2.html"),
+    ("Michael Jäger und Philip Leistner", "artikel-3-2.html"),
+    ("Ulrike Kuhlmann und Mike Schlaich", "artikel-5-3.html"),
+    ("Amandus Samsøe Sattler", "artikel-5-2.html"),
+    ("Helena Gervásio", "artikel-2-7.html"),
+    ("Christine Lemaitre", "artikel-3-1.html"),
+    ("Angelika Mettke", "artikel-2-5.html"),
+    ("Anna Menegazzi", "artikel-2-3.html"),
+    ("Marcel de Groot", "artikel-2-6.html"),
+    ("Florian Summa", "artikel-2-1.html"),
+    ("Thomas Ummenhofer", "artikel-1-7.html"),
+    ("Benedikt Esche", "artikel-5-1.html"),
+    ("Philippe Block", "artikel-1-1.html"),
+    ("Andreas Hofer", "artikel-1-3.html"),
+    ("Achim Menges", "artikel-1-4.html"),
+    ("Cordula Kropp", "artikel-1-5.html"),
+    ("Stefan Winter", "artikel-1-6.html"),
+    ("Markus Stommel", "artikel-1-8.html"),
+    ("Bernd Hillemeier", "artikel-1-9.html"),
+    ("Claire Thomas", "artikel-3-4.html"),
+    ("Tobias Lehnert", "artikel-3-5.html"),
+    ("Reiner Nagel", "artikel-4-1.html"),
+    ("Ortwin Renn", "artikel-4-2.html"),
+    ("Thomas Gloning", "artikel-4-3.html"),
+]
+
+
+def linkify_article_mentions(text: str) -> str:
+    """Escape plain text, then wrap known author mentions with article links."""
+    result = html.escape(text)
+    phrases = sorted(ARTICLE_LINK_PHRASES, key=lambda item: len(item[0]), reverse=True)
+    placeholders = []
+    for i, (phrase, href) in enumerate(phrases):
+        needle = html.escape(phrase)
+        if needle not in result:
+            continue
+        token = f"@@ARTICLELINK{i}@@"
+        result = result.replace(needle, token, 1)
+        placeholders.append(
+            (
+                token,
+                f'<a class="article-inline-link" href="{html.escape(href)}">'
+                f"{needle}</a>",
+            )
+        )
+    for token, link in placeholders:
+        result = result.replace(token, link)
+    return result
+
+
+def paras_to_html(paragraphs, *, linkify: bool = False) -> str:
+    if linkify:
+        return "\n".join(
+            f"            <p>{linkify_article_mentions(p)}</p>" for p in paragraphs
+        )
     return "\n".join(f"            <p>{html.escape(p)}</p>" for p in paragraphs)
 
 
@@ -370,7 +443,9 @@ def build_einleitung_body() -> str:
             f'            <h2 id="{html.escape(section["id"])}">'
             f'{html.escape(section["heading"])}</h2>'
         )
-        parts.append(paras_to_html(section["paragraphs"]))
+        # Link article mentions in the five chapter overview sections
+        linkify = section["id"].startswith("kapitel-")
+        parts.append(paras_to_html(section["paragraphs"], linkify=linkify))
     parts.append('            <h2 id="literatur">Literatur</h2>')
     parts.append('            <ul class="article-literature">')
     for entry in LITERATURE:
@@ -520,7 +595,7 @@ def render_article_page(i: int, body_5_4: str, body_einleitung: str) -> str:
 def render_chapter_page(num: int) -> str:
     filename = chapter_file(num)
     label = next(label for key, label, n in SECTIONS if n == num)
-    body_parts = [paras_to_html(CHAPTER_INTROS[num])]
+    body_parts = [paras_to_html(CHAPTER_INTROS[num], linkify=True)]
     body_parts.append('            <h2>Beiträge in diesem Abschnitt</h2>')
     body_parts.append('            <ul class="chapter-article-list">')
     for _, art_file, authors, title, _toc, _full in articles_in_section(num):
@@ -553,7 +628,32 @@ def render_chapter_page(num: int) -> str:
     )
 
 
+def verify_chapter_links() -> None:
+    """Ensure every non-Einleitung article is linkified once in its chapter intro."""
+    expected = {
+        filename
+        for sec, filename, *_ in ARTICLES
+        if isinstance(sec, int)
+    }
+    found = set()
+    missing_phrases = []
+    for num, paragraphs in CHAPTER_INTROS.items():
+        blob = "\n".join(paragraphs)
+        for phrase, href in ARTICLE_LINK_PHRASES:
+            if href.startswith(f"artikel-{num}-") and phrase in blob:
+                found.add(href)
+            elif href.startswith(f"artikel-{num}-") and phrase not in blob:
+                missing_phrases.append((href, phrase))
+    missing = sorted(expected - found)
+    if missing or missing_phrases:
+        raise SystemExit(
+            f"Chapter linkify incomplete. missing files={missing} "
+            f"missing phrases={missing_phrases}"
+        )
+
+
 def main():
+    verify_chapter_links()
     body_5_4 = load_article_5_4_body()
     body_einleitung = build_einleitung_body()
 
