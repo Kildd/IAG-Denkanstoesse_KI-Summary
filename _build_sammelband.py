@@ -2,8 +2,6 @@
 """Generate Sammelbandartikel pages with shared TOC and prev/next navigation."""
 from pathlib import Path
 import html
-import json
-import re
 
 from _sammelband_content import (
     CHAPTER_INTROS,
@@ -268,7 +266,7 @@ ARTICLES = [
         "Celina Hunschok, Johanna Ruge, Max Dombrowski und Oliver André Wege",
         "Zwischen Tragwerk und Tragweite. Das Berufsbild Bauingenieur:in in planetaren Grenzen",
         "Zwischen Tragwerk und Tragweite. Das Berufsbild Bauingenieur:in in planetaren Grenzen",
-        True,
+        False,
     ),
 ]
 
@@ -464,50 +462,6 @@ def build_einleitung_body() -> str:
     return "\n".join(parts)
 
 
-def load_article_5_4_body() -> str:
-    """Load previously extracted full article body for 5-4."""
-    paras_path = root / "_article_paras.json"
-    if not paras_path.exists():
-        return "            <p>Beitrag folgt.</p>"
-
-    paras = json.loads(paras_path.read_text(encoding="utf-8"))
-    for i, p in enumerate(paras):
-        if p.startswith("Celina Hunschok"):
-            paras[i] = (
-                "Celina Hunschok, Johanna Ruge, Max Dombrowski und Oliver André Wege"
-            )
-
-    keywords = paras[4] if len(paras) > 4 else ""
-    body_paras = paras[5:]
-    parts = []
-    if keywords:
-        parts.append(f'            <p class="article-keywords">{html.escape(keywords)}</p>')
-
-    in_lit = False
-    for p in body_paras:
-        if p == "Literatur":
-            in_lit = True
-            parts.append('            <h3 id="literatur">Literatur</h3>')
-            parts.append('            <ul class="article-literature">')
-            continue
-        if in_lit:
-            parts.append(f"              <li>{html.escape(p)}</li>")
-            continue
-        m = re.match(r"^(\d+)\.\s+(.*)$", p)
-        if m:
-            num, text = m.group(1), m.group(2)
-            parts.append(
-                f'            <h3 class="numbered-heading" id="abschnitt-{num}">'
-                f'<span class="heading-num">{num}.</span>'
-                f'<span class="heading-text">{html.escape(text)}</span></h3>'
-            )
-        else:
-            parts.append(f"            <p>{html.escape(p)}</p>")
-    if in_lit:
-        parts.append("            </ul>")
-    return "\n".join(parts)
-
-
 def pager(i: int) -> str:
     prev_link = ""
     next_link = ""
@@ -570,7 +524,7 @@ def page_shell(
 """
 
 
-def render_article_page(i: int, body_5_4: str, body_einleitung: str) -> str:
+def render_article_page(i: int, body_einleitung: str) -> str:
     sec, filename, authors, title, toc_label, has_full = ARTICLES[i]
     if filename == "einleitung.html":
         display_title = title
@@ -579,16 +533,6 @@ def render_article_page(i: int, body_5_4: str, body_einleitung: str) -> str:
             f'            <p class="article-authors">{html.escape(authors)}</p>\n'
         )
         body = body_einleitung
-    elif has_full:
-        display_title = "Zwischen Tragwerk und Tragweite"
-        subtitle_html = (
-            '            <p class="article-subtitle">'
-            "Das Berufsbild Bauingenieur:in in planetaren Grenzen</p>\n"
-        )
-        authors_html = (
-            f'            <p class="article-authors">{html.escape(authors)}</p>\n'
-        )
-        body = body_5_4
     else:
         display_title = title
         subtitle_html = ""
@@ -673,12 +617,11 @@ def verify_chapter_links() -> None:
 
 def main():
     verify_chapter_links()
-    body_5_4 = load_article_5_4_body()
     body_einleitung = build_einleitung_body()
 
     for i, article in enumerate(ARTICLES):
         filename = article[1]
-        html_out = render_article_page(i, body_5_4, body_einleitung)
+        html_out = render_article_page(i, body_einleitung)
         (root / filename).write_text(html_out, encoding="utf-8")
         print("wrote", filename)
 
